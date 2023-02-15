@@ -5,6 +5,10 @@ on:
       prevRev:
         description: 'Revision of the previous release'
         required: false
+      repo:
+        description: 'Ghidra Repository in GitHub'
+        required: false
+        default: NationalSecurityAgency/ghidra
       rev:
         description: 'NationalSecurityAgency/ghidra commit to build'
         required: true
@@ -33,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: NationalSecurityAgency/Ghidra
+          repository: ${{ github.event.inputs.repo }}
           ref: ${{ github.event.inputs.rev }}
       - uses: actions/setup-java@v3
         with:
