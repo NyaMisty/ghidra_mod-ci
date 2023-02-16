@@ -216,7 +216,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: ghidra-ci-roblabla
+      - name: Touch CHANGELOG.md
+        run: |
+          cd ghidra-ci-roblabla
+          touch CHANGELOG.md
       - name: Generate CHANGELOG.md
+        if: ${{ github.event.inputs.prevRev }}
         run: |
           cd ghidra-ci-roblabla
           sudo apt-get update
