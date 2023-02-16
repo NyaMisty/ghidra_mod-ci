@@ -129,7 +129,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: NationalSecurityAgency/Ghidra
+          repository: ${{ github.event.inputs.repo }}
           ref: ${{ github.event.inputs.rev }}
           fetch-depth: 0
           
