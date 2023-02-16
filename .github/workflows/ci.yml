@@ -192,21 +192,6 @@ jobs:
         with:
           gradle-version: 7.3.3
           arguments: -x ip -PallPlatforms buildGhidra
-      # TODO: remove upload-artifact when create release is sure to work
-      - name: Upload final dist
-        uses: actions/upload-artifact@v3
-        with:
-          path: "build/dist/*"
-      - name: Remove temporary artifacts
-        uses: geekyeggo/delete-artifact@v2
-        with:
-          name: |
-            natives-win_x86_32
-            natives-win_x86_64
-            natives-mac_x86_64
-            natives-mac_arm_64
-            natives-linux_x86_64
-            natives-linux_arm_64
       - name: Get current date, rev and dist name
         id: date
         run: |
@@ -241,6 +226,22 @@ jobs:
           commitish: "master"
           draft: false
           prerelease: false
+
+      # TODO: remove upload-artifact when create release is sure to work
+      - name: Upload final dist
+        uses: actions/upload-artifact@v3
+        with:
+          path: "build/dist/*"
+      - name: Remove temporary artifacts
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: |
+            natives-win_x86_32
+            natives-win_x86_64
+            natives-mac_x86_64
+            natives-mac_arm_64 
+            natives-linux_x86_64
+            natives-linux_arm_64
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
