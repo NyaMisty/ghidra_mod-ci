@@ -219,7 +219,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.date.outputs.date }}
+          tag_name: ${{ steps.date.outputs.date }}-${{ steps.date.outputs.rev }}
           release_name: Release ${{ steps.date.outputs.date }}(${{ steps.date.outputs.rev }})
           body_path: ./ghidra-ci-roblabla/CHANGELOG.md
           # TODO: This is a horrible hack.
