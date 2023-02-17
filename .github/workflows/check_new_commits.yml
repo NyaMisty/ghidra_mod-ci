@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
     inputs: {}
 
+env:    
+  GHIDRA_REPO: ${{ vars.DEFAULT_REPO || github.event.inputs.repo }}
+
 jobs:
   # Ensure all steps use a common revision
   check:
@@ -13,12 +16,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: NationalSecurityAgency/Ghidra
+          repository: ${{ env.GHIDRA_REPO }}
       - name: Check for new commits
         id: check
         run: |
           LAST_REL_NAME=$(curl --silent "https://api.github.com/repos/${{github.repository}}/releases/latest" | jq .name)
-          LAST_REL_COMMITID=$(echo $LAST_REL_NAME | grep -oP "\(\K\w+(?=\))")
+          # Extract the XXXCOMMIT from "XXXXXX (XXXREPONAME:XXXCOMMIT)"
+          LAST_REL_COMMITID=$(echo $LAST_REL_NAME | grep -oP "\((.*?[^0-9a-f]|)\K[0-9a-f]+(?=\))")
           COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
           COMMIT_HASH_LONG=$(git rev-parse HEAD)
           echo "Latest commit is $COMMIT_HASH_LONG"

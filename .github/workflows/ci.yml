@@ -13,6 +13,9 @@ on:
         description: 'NationalSecurityAgency/ghidra commit to build'
         required: true
 
+env:
+  GHIDRA_REPO: ${{ vars.DEFAULT_REPO || github.event.inputs.repo }}
+
 jobs:
   build-natives:
     strategy:
@@ -37,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: ${{ github.event.inputs.repo }}
+          repository: ${{ env.GHIDRA_REPO }}
           ref: ${{ github.event.inputs.rev }}
       - uses: actions/setup-java@v3
         with:
@@ -129,7 +132,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: ${{ github.event.inputs.repo }}
+          repository: ${{ env.GHIDRA_REPO }}
           ref: ${{ github.event.inputs.rev }}
           fetch-depth: 0
           
@@ -213,14 +216,18 @@ jobs:
           sudo apt-get install libkrb5-dev
           npm i
           node generate_changelog.js ${{github.event.inputs.prevRev}} ${{github.event.inputs.rev}} > CHANGELOG.md
+      - name: Escape Repo Name for Tag
+        id: escaperepo
+        run: |
+          echo "value=${GHIDRA_REPO//\//_}" >> $GITHUB_OUTPUT
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.date.outputs.date }}-${{ steps.date.outputs.rev }}
-          release_name: Release ${{ steps.date.outputs.date }}(${{ steps.date.outputs.rev }})
+          tag_name: ${{ steps.date.outputs.date }}-${{ steps.escaperepo.outputs.value }}-${{ steps.date.outputs.rev }}
+          release_name: Release ${{ steps.date.outputs.date }}(${{ env.GHIDRA_REPO }}:${{ steps.date.outputs.rev }})
           body_path: ./ghidra-ci-roblabla/CHANGELOG.md
           # TODO: This is a horrible hack.
           commitish: "master"
