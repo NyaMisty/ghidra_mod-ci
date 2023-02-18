@@ -139,10 +139,52 @@ jobs:
         with:
           name: natives-${{ matrix.target }}
           path: "${{matrix.target}}.build.tar"
+  build-ghidra:
+    name: "Build Ghidra CrossPlatform Part"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ env.GHIDRA_REPO }}
+          ref: ${{ github.event.inputs.rev }}
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+      - name: Fetch the Ghidra dependencies.
+        uses: eskatos/gradle-command-action@v2
+        with:
+          gradle-version: 7.3.3
+          arguments: --init-script gradle/support/fetchDependencies.gradle init
+      # TODO: Pre-build GhidraDev
+      - name: Checkout ghidra-data
+        uses: actions/checkout@v3
+        with:
+          repository: NationalSecurityAgency/ghidra-data
+          path: 'ghidra-data'
+      - name: Copy ghidra-data files into the appropriate directories
+        run: cp -r ghidra-data/FunctionID/* Ghidra/Features/FunctionID/data
+      - name: Build ghidra, create a cross-platform distribution
+        uses: eskatos/gradle-command-action@v2
+        with:
+          gradle-version: 7.3.3
+          arguments: -x ip -x buildNatives -x decompileLinux_x86_64Executable -PallPlatforms assembleDistribution
+      - name: Remove incomplete dist
+        run: rm -rf build/dist
+      - name: Tar the binaries
+        run: tar -cvf "ghidra-base.build.tar" .gradle build
+        shell: bash
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ghidra-base
+          path: "ghidra-base.build.tar"
 
   dist:
     name: "Build Ghidra distributable zip"
-    needs: ["build-natives"]
+    needs: ["build-natives", "build-ghidra"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -181,6 +223,11 @@ jobs:
         with:
           name: natives-linux_arm_64
 
+      - name: Download Ghidra-Base
+        uses: actions/download-artifact@v3
+        with:
+          name: ghidra-base
+
       - name: Extract all binaries
         run: |
           for file in *.build.tar; do
@@ -209,7 +256,7 @@ jobs:
         uses: eskatos/gradle-command-action@v2
         with:
           gradle-version: 7.3.3
-          arguments: -x ip -PallPlatforms buildGhidra
+          arguments: -x ip -x compileJava -x sleighCompile -x buildNatives -x buildHelp -x createJavadocs -PallPlatforms buildGhidra
       - name: Get current date, rev and dist name
         id: date
         run: |
@@ -254,16 +301,16 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: "build/dist/*"
-      - name: Remove temporary artifacts
-        uses: geekyeggo/delete-artifact@v2
-        with:
-          name: |
-            natives-win_x86_32
-            natives-win_x86_64
-            natives-mac_x86_64
-            natives-mac_arm_64 
-            natives-linux_x86_64
-            natives-linux_arm_64
+      #- name: Remove temporary artifacts
+      #  uses: geekyeggo/delete-artifact@v2
+      #  with:
+      #    name: |
+      #      natives-win_x86_32
+      #      natives-win_x86_64
+      #      natives-mac_x86_64
+      #      natives-mac_arm_64 
+      #      natives-linux_x86_64
+      #      natives-linux_arm_64
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
