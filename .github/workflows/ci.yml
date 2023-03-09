@@ -308,10 +308,16 @@ jobs:
       - name: Checkout ghidra-data
         uses: actions/checkout@v3
         with:
-          repository: NationalSecurityAgency/ghidra-data
+          repository: NyaMisty/ghidra-data
           path: 'ghidra-data'
+          submodules: recursive
+      - name: Update ghidra-data Submodules
+        run: cd ghidra-data && git submodule update --remote
       - name: Copy ghidra-data files into the appropriate directories
-        run: cp -r ghidra-data/FunctionID/* Ghidra/Features/FunctionID/data
+        run: |
+          cp -RL ghidra-data/FunctionID/* Ghidra/Features/FunctionID/data
+          cp -RL ghidra-data/symbols/* Ghidra/Features/Base/data/symbols
+          cp -RL ghidra-data/typeinfo/* Ghidra/Features/Base/data/typeinfo
       - name: Build ghidra, create a cross-platform distribution
         uses: eskatos/gradle-command-action@v2
         with:
