@@ -4,7 +4,7 @@ on:
     inputs:
       repo:
         description: Ghidra GitHub repository
-        default: NationalSecurityAgency/ghidra
+        default: NyaMisty/ghidra_mod
         required: true
       prevRev:
         description: 'Revision of the previous release'

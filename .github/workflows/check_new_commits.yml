@@ -6,7 +6,7 @@ on:
     inputs:
       repo:
         description: Ghidra GitHub repository
-        default: NationalSecurityAgency/ghidra
+        default: NyaMisty/ghidra_mod
         required: true
 
 env:
