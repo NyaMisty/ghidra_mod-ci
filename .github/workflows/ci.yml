@@ -165,7 +165,7 @@ jobs:
       - name: Checkout ghidra-data
         uses: actions/checkout@v4
         with:
-          repository: NationalSecurityAgency/ghidra-data
+          repository: NyaMisty/ghidra-data
           path: 'ghidra-data'
       - name: Copy ghidra-data files into the appropriate directories
         run: cp -r ghidra-data/FunctionID/* Ghidra/Features/FunctionID/data
@@ -212,7 +212,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.date.outputs.date }}
+          tag_name: ${{ steps.date.outputs.date }}-${{ steps.date.outputs.rev }}
           release_name: Release ${{ steps.date.outputs.date }}(${{ steps.date.outputs.rev }})
           body_path: ./ghidra-ci/CHANGELOG.md
           # TODO: This is a horrible hack.
@@ -227,5 +227,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/dist/${{ steps.date.outputs.dist }}
-          asset_name: release.zip
+          asset_name: ${{ steps.date.outputs.dist }}
           asset_content_type: application/zip
