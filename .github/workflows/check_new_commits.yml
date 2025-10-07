@@ -14,21 +14,27 @@ env:
 
 jobs:
   # Ensure all steps use a common revision
-  check:
+  check-stable:
     name: Check for new commits since last release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           repository: ${{ env.GHIDRA_REPO }}
-      - name: Check for new commits
+      - name: Check for new commits (stable)
         id: check
         run: |
-          LAST_REL_NAME=$(curl --silent "https://api.github.com/repos/${{github.repository}}/releases/latest" | jq .name)
+          #LAST_REL_NAME=$(curl --silent "https://api.github.com/repos/${{github.repository}}/releases/latest" | jq .name)
+          LAST_REL_NAME=$(gh release list \
+            --exclude-pre-releases \
+            --exclude-drafts \
+            --limit 1 \
+            --json name \
+            --jq '.[0].name')
           # Extract the XXXCOMMIT from "XXXXXX (XXXREPONAME:XXXCOMMIT)"
           LAST_REL_COMMITID=$(echo $LAST_REL_NAME | grep -oP "\((.*?[^0-9a-f]|)\K[0-9a-f]+(?=\))")
-          COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)
-          COMMIT_HASH_LONG=$(git rev-parse HEAD)
+          COMMIT_HASH_SHORT=$(git rev-parse --short stable)
+          COMMIT_HASH_LONG=$(git rev-parse stable)
           echo "Latest commit is $COMMIT_HASH_LONG"
           if [[ "$LAST_REL_NAME" == *"$COMMIT_HASH_SHORT"* ]]; then
             echo "No commits since last release $LAST_REL_NAME"
@@ -43,4 +49,40 @@ jobs:
         uses: benc-uk/workflow-dispatch@v1.2
         with:
           workflow: "Ghidra Build"
-          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}" }'
+          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": true }'
+
+  check-master:
+    name: Check for new commits since last release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.GHIDRA_REPO }}
+      - name: Check for new commits (master)
+        id: check
+        run: |
+          #LAST_REL_NAME=$(curl --silent "https://api.github.com/repos/${{github.repository}}/releases/latest" | jq .name)
+          LAST_REL_NAME=$(gh release list \
+            --exclude-drafts \
+            --limit 1 \
+            --json name \
+            --jq '.[0].name')
+          # Extract the XXXCOMMIT from "XXXXXX (XXXREPONAME:XXXCOMMIT)"
+          LAST_REL_COMMITID=$(echo $LAST_REL_NAME | grep -oP "\((.*?[^0-9a-f]|)\K[0-9a-f]+(?=\))")
+          COMMIT_HASH_SHORT=$(git rev-parse --short master)
+          COMMIT_HASH_LONG=$(git rev-parse master)
+          echo "Latest commit is $COMMIT_HASH_LONG"
+          if [[ "$LAST_REL_NAME" == *"$COMMIT_HASH_SHORT"* ]]; then
+            echo "No commits since last release $LAST_REL_NAME"
+          else
+            echo "Found new commits since $LAST_REL_NAME. Triggering ci."
+            echo "trigger=true" >> $GITHUB_OUTPUT
+            echo "rev=$COMMIT_HASH_LONG" >> $GITHUB_OUTPUT
+            echo "lastrev=$LAST_REL_COMMITID" >> $GITHUB_OUTPUT
+          fi
+      - name: Trigger build
+        if: steps.check.outputs.trigger
+        uses: benc-uk/workflow-dispatch@v1.2
+        with:
+          workflow: "Ghidra Build"
+          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": false }'

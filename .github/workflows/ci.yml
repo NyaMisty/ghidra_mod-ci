@@ -12,6 +12,9 @@ on:
       rev:
         description: 'Revision to build'
         required: true
+      stable:
+        description: 'Build stable (release) version'
+        required: false
 
 env:
   GRADLE_VERSION: 8.5
@@ -212,13 +215,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.date.outputs.date }}-${{ steps.date.outputs.rev }}
+          tag_name: ${{github.event.inputs.stable == 'true' && 'stable-' || ''}}${{ steps.date.outputs.date }}-${{ steps.date.outputs.rev }}
           release_name: Release ${{ steps.date.outputs.date }}(${{ steps.date.outputs.rev }})
           body_path: ./ghidra-ci/CHANGELOG.md
           # TODO: This is a horrible hack.
-          commitish: "master"
+          commitish: ${{ github.event.inputs.stable != 'true' && 'master' || 'stable' }}
           draft: false
-          prerelease: false
+          prerelease: ${{ github.event.inputs.stable != 'true' }}
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
