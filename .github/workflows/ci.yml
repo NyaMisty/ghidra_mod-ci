@@ -15,6 +15,10 @@ on:
       stable:
         description: 'Build stable (release) version'
         required: false
+      skipRelease:
+        description: 'Skip release creation and only upload artifacts'
+        required: false
+        default: 'false'
 
 env:
   GRADLE_VERSION: 8.5
@@ -187,16 +191,18 @@ jobs:
         with:
           name: natives-*
       - name: Get current date, rev and dist name
+        if: ${{ github.event.inputs.skipRelease != 'true' }}
         id: date
         run: |
           echo date=$(date +'%Y-%m-%d') >> $GITHUB_OUTPUT
           echo dist=$(ls build/dist) >> $GITHUB_OUTPUT
           echo rev=$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
       - uses: actions/checkout@v4
+        if: ${{ github.event.inputs.skipRelease != 'true' }}
         with:
           path: ghidra-ci
       - name: Generate CHANGELOG.md
-        if: ${{ inputs.prevRev != '' }}
+        if: ${{ github.event.inputs.skipRelease != 'true' && inputs.prevRev != '' }}
         run: |
           cd ghidra-ci
           sudo apt-get update
@@ -204,12 +210,13 @@ jobs:
           npm i
           node generate_changelog.js ${{ github.event.inputs.repo }} ${{github.event.inputs.prevRev}} ${{github.event.inputs.rev}} > CHANGELOG.md
       - name: Generate fallback CHANGELOG.md
-        if: ${{ inputs.prevRev == '' }}
+        if: ${{ github.event.inputs.skipRelease != 'true' && inputs.prevRev == '' }}
         run: |
           cd ghidra-ci
           echo "# Changelog" > CHANGELOG.md
           echo "Built from [${{ inputs.repo }}@${{ inputs.rev }}](https://github.com/${{ inputs.repo }}/commit/${{ inputs.rev }})" >> CHANGELOG.md
       - name: Create Release
+        if: ${{ github.event.inputs.skipRelease != 'true' }}
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -223,6 +230,7 @@ jobs:
           draft: false
           prerelease: ${{ github.event.inputs.stable != 'true' }}
       - name: Upload Release Asset
+        if: ${{ github.event.inputs.skipRelease != 'true' }}
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
