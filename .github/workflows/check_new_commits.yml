@@ -49,7 +49,7 @@ jobs:
         uses: benc-uk/workflow-dispatch@v1.2
         with:
           workflow: "Ghidra Build"
-          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": true }'
+          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": "true" }'
 
   check-master:
     name: Check for new commits since last release
@@ -84,4 +84,4 @@ jobs:
         uses: benc-uk/workflow-dispatch@v1.2
         with:
           workflow: "Ghidra Build"
-          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": false }'
+          inputs: '{ "repo": "${{ env.GHIDRA_REPO }}", "rev": "${{steps.check.outputs.rev}}", "prevRev": "${{steps.check.outputs.lastrev}}", "stable": "false" }'
